@@ -3,9 +3,10 @@ package me.shadaj.scalapy.py
 import scala.language.dynamics
 import scala.reflect.ClassTag
 
+import me.shadaj.scalapy.readwrite.FacadeReader
 import me.shadaj.scalapy.interpreter.CPythonInterpreter
 
-@native trait Module extends Dynamic
+@native class Module extends Dynamic
 
 object Module {
   def apply(module: String): Module = {
