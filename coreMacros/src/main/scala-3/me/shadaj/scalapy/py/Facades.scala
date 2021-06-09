@@ -4,20 +4,28 @@ import scala.language.experimental.macros
 import scala.annotation.StaticAnnotation
 import scala.quoted.*
 import scala.language.dynamics
-
-class native extends StaticAnnotation
 import scala.reflect.TypeTest
+class native extends StaticAnnotation
+
+class FacadeCreator[T]
+trait Any
+class Bar[T <: Any](fImpl: T) extends FacadeCreator[T] { def create: T = fImpl }
 
 object FacadeImpl {
   
+  def creator[T <: Any](using Type[T], Quotes): Expr[FacadeCreator[T]] = 
+    import quotes.reflect.*
+    // new FacadeCreator[T] { def create: T = new T }
+    // println(TypeTree.of[T])
+    val bar = TypeIdent(Symbol.requiredClass("me.shadaj.scalapy.py.Bar"))
+    Apply(TypeApply(Select.unique(New(bar),"<init>"),List(TypeTree.of[T])),List(Apply(Select.unique(New(TypeTree.of[T]),"<init>"),List()))).asExprOf[FacadeCreator[T]]
+
   def calleeParamRefs(using Quotes)(callee: quotes.reflect.Symbol): List[List[quotes.reflect.Term]] = {
     import quotes.reflect.*
     
     val termParamss = callee.paramSymss.filterNot(_.headOption.exists(_.isType))
     termParamss.map(_.map(x => Ref.apply(x)))
   }
-
-  def creator = ???
 
   def native_impl[T: Type](using Quotes): Expr[T] = {
     import quotes.reflect.*

@@ -172,7 +172,7 @@ lazy val core = crossProject(JVMPlatform, NativePlatform)
       IO.write(fileToWrite, toWrite)
       Seq(fileToWrite)
     },
-    libraryDependencies += "org.scala-lang.modules" %%% "scala-collection-compat" % "2.4.4",
+    libraryDependencies += "org.scala-lang.modules" %%% "scala-collection-compat" % "2.5.0",
     libraryDependencies ++= {
       CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, _)) => Seq(
@@ -243,8 +243,10 @@ lazy val bench = crossProject(JVMPlatform, NativePlatform)
     name := "scalapy-bench",
     version := "0.1.0-SNAPSHOT"
   ).jvmSettings(
+    crossScalaVersions := supportedScalaVersions,
     javaOptions += s"-Djna.library.path=$pythonLibsDir"
   ).nativeSettings(
+    crossScalaVersions := scala2Versions,
     nativeLinkingOptions ++= pythonLdFlags,
     nativeMode := "release-fast"
   ).dependsOn(core)

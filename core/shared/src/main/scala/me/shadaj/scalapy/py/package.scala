@@ -4,17 +4,15 @@ import scala.collection.mutable
 
 import scala.concurrent.Future
 
+import me.shadaj.scalapy.readwrite.FacadeReader
 import me.shadaj.scalapy.interpreter.{CPythonInterpreter, PyValue}
 import me.shadaj.scalapy.readwrite.{Reader, Writer}
 import scala.collection.mutable.Queue
 import me.shadaj.scalapy.interpreter.Platform
 
-package object py extends PyMacros {
+package object py extends PyMacros with PyNone {
   def module(name: String) = Module(name)
   def module(name: String, subname: String) = Module(name, subname)
-
-  @py.native trait None extends Any
-  val None = Any.populateWith(CPythonInterpreter.noneValue).as[None]
 
   type NoneOr[T] = None | T
 
