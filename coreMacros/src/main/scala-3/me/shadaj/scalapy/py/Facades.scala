@@ -30,6 +30,7 @@ object FacadeImpl {
     import quotes.reflect.*
 
     val classDynamicSymbol = Symbol.requiredClass("me.shadaj.scalapy.py.Dynamic")
+
     val callee = Symbol.spliceOwner.owner
     val methodName = callee.name
     val refss = calleeParamRefs(callee)
@@ -39,7 +40,7 @@ object FacadeImpl {
     val args = refss.headOption.toList.flatten
 
     if (args.isEmpty) {
-      val selectDynamicTree = 
+      val selectDynamicTerm = 
         TypeApply( //this.as[Dynamic].selectDynamic(methodName).as[T]
           Select.unique( // this.as[Dynamic].selectDynamic(methodName).as
             Apply( // this.as[Dynamic].selectDynamic(methodName)
@@ -60,10 +61,10 @@ object FacadeImpl {
           ),
           List(TypeTree.of[T]) 
         )
-      selectDynamicTree.asExprOf[T]
+      selectDynamicTerm.asExprOf[T]
     }
     else {
-      val applyDynamicTree = 
+      val applyDynamicTerm = 
         TypeApply(   //  this.as[Dynamic].applyDynamic(methodName)(parameters).as[T]
           Select.unique(  //  this.as[Dynamic].applyDynamic(methodName)(parameters).as
             Apply(    // this.as[Dynamic].applyDynamic(methodName)(parameters)
@@ -78,7 +79,7 @@ object FacadeImpl {
                   ),
                   "applyDynamic"
                 ),
-                List(Expr(callee.name).asTerm)
+                List(Expr(methodName).asTerm)
               ),
               List(Varargs(args.map(_.asExpr)).asTerm)
             ),
@@ -86,7 +87,7 @@ object FacadeImpl {
           ),
           List(TypeTree.of[T])         
         )
-      applyDynamicTree.asExprOf[T]
+      applyDynamicTerm.asExprOf[T]
     }
   }
 
