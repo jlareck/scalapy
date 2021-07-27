@@ -1,6 +1,7 @@
 package me.shadaj.scalapy.py
 
 import org.scalatest.funsuite.AnyFunSuite
+import scala.language.dynamics
 
 @native trait StringModuleFacade extends Module {
   def digits: String = native

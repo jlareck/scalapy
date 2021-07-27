@@ -1,4 +1,4 @@
-package me.shadaj.scalapy
+package me.shadaj.scalapy.py
 
 import scala.collection.mutable
 
@@ -9,16 +9,22 @@ import me.shadaj.scalapy.readwrite.{Reader, Writer}
 import scala.collection.mutable.Queue
 import me.shadaj.scalapy.interpreter.Platform
 
-package object py extends PyMacros {
+
   def module(name: String) = Module(name)
   def module(name: String, subname: String) = Module(name, subname)
 
-  @py.native trait None extends Any
+  inline def native[T]: T = ${FacadeImpl.native_impl[T]}
+  inline def nativeNamed[T]: T = ??? //${FacadeImpl.native_named_impl[T]}
+  
+  @native trait None extends Any
   val None = Any.populateWith(CPythonInterpreter.noneValue).as[None]
+
+  //inline def native[T]: T = ${FacadeImpl.native_impl[T]}
+ // inline def nativeNamed[T]: T = ??? //${FacadeImpl.native_named_impl[T]}
 
   type NoneOr[T] = None | T
 
-  def `with`[T <: py.Any, O](ref: T)(withValue: T => O): O = {
+  def `with`[T <: Any, O](ref: T)(withValue: T => O): O = {
     ref.as[Dynamic](Reader.facadeReader[Dynamic](FacadeCreator.getCreator[Dynamic])).__enter__()
     try {
       withValue(ref)
@@ -78,7 +84,7 @@ package object py extends PyMacros {
   }
 
   object PyQuotable {
-    implicit def fromAny(any: py.Any): PyQuotable = {
+    implicit def fromAny(any: Any): PyQuotable = {
       new PyQuotable(CPythonInterpreter.getVariableReference(any.value))
     }
 
@@ -105,4 +111,4 @@ package object py extends PyMacros {
       }
     }
   }
-}
+

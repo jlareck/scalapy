@@ -30,7 +30,7 @@ object FacadeImpl {
     import quotes.reflect.*
 
     val classDynamicSymbol = Symbol.requiredClass("me.shadaj.scalapy.py.Dynamic")
-
+    //classDynamicSymbol.declaredMethods.foreach(println)
     val callee = Symbol.spliceOwner.owner
     val methodName = callee.name
     val refss = calleeParamRefs(callee)
@@ -38,7 +38,7 @@ object FacadeImpl {
     if refss.length > 1 then
       report.throwError(s"callee $callee has curried parameter lists.")
     val args = refss.headOption.toList.flatten
-
+        
     if (args.isEmpty) {
       val selectDynamicTerm = 
         TypeApply( //this.as[Dynamic].selectDynamic(methodName).as[T]
