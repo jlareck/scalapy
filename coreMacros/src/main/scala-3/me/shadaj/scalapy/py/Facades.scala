@@ -53,10 +53,10 @@ object FacadeImpl {
         
     if (args.isEmpty) {
       val selectDynamicTerm = 
-        TypeApply( //this.as[Dynamic].selectDynamic(methodName).as[T]
-          Select.unique( // this.as[Dynamic].selectDynamic(methodName).as
-            Apply( // this.as[Dynamic].selectDynamic(methodName)
-              Select.unique( // this.as[Dynamic].selectDynamic
+        TypeApply( //this.as[Dynamic](evidence).selectDynamic(methodName).as[T]
+          Select.unique( // this.as[Dynamic](evidence).selectDynamic(methodName).as
+            Apply( // this.as[Dynamic](evidence).selectDynamic(methodName)
+              Select.unique( // this.as[Dynamic](evidence).selectDynamic
                 Apply(      // this.as[Dynamic](evidence)
                   TypeApply(  // this.as[Dynamic]
                     Select.unique( // this.as
@@ -81,11 +81,11 @@ object FacadeImpl {
     }
     else {
       val applyDynamicTerm = 
-        TypeApply(   //  this.as[Dynamic].applyDynamic(methodName)(parameters).as[T]
-          Select.unique(  //  this.as[Dynamic].applyDynamic(methodName)(parameters).as
-            Apply(    // this.as[Dynamic].applyDynamic(methodName)(parameters)
-              Apply(  // this.as[Dynamic].applyDynamic(methodName)
-                Select.unique( // this.as[Dynamic].applyDynamic
+        TypeApply(   //  this.as[Dynamic](evidence).applyDynamic(methodName)(parameters).as[T]
+          Select.unique(  //  this.as[Dynamic](evidence).applyDynamic(methodName)(parameters).as
+            Apply(    // this.as[Dynamic](evidence).applyDynamic(methodName)(parameters)
+              Apply(  // this.as[Dynamic](evidence).applyDynamic(methodName)
+                Select.unique( // this.as[Dynamic](evidence).applyDynamic
                   Apply(      // this.as[Dynamic](evidence)
                     TypeApply(  // this.as[Dynamic]
                       Select.unique( // this.as
