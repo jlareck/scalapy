@@ -34,16 +34,16 @@ object FacadeImpl {
     val readerTypeRepr = TypeIdent(classReaderSymbol).tpe
     val dynamicTypeRepr = TypeIdent(classDynamicSymbol).tpe
     val applyDynamicTypeToReaderType = readerTypeRepr.appliedTo(dynamicTypeRepr)
-    val tTypeToReaderType = readerTypeRepr.appliedTo(TypeTree.of[T].tpe)
+    val applyTTypeToReaderType = readerTypeRepr.appliedTo(TypeTree.of[T].tpe)
 
     println("AST:   " + applyDynamicTypeToReaderType)
-    val evidenceParameter = Implicits.search(applyDynamicTypeToReaderType) match {
+    val evidenceForDynamic = Implicits.search(applyDynamicTypeToReaderType) match {
       case success: ImplicitSearchSuccess => {
         println("AST:   " + success.tree)
         success.tree
       }
     }
-    val evidenceForTypeT = Implicits.search(tTypeToReaderType) match {
+    val evidenceForTypeT = Implicits.search(applyTTypeToReaderType) match {
         case success: ImplicitSearchSuccess => {
           println("AST:   " + success.tree)
           success.tree
@@ -73,7 +73,7 @@ object FacadeImpl {
                     ),
                     List(TypeIdent(classDynamicSymbol))
                   ),
-                  List(evidenceParameter)
+                  List(evidenceForDynamic)
                 ),  
                 "selectDynamic"
               ),
@@ -106,7 +106,7 @@ object FacadeImpl {
                       ),
                       List(TypeIdent(classDynamicSymbol))
                     ),
-                    List(evidenceParameter)
+                    List(evidenceForDynamic)
                   ),
                   "applyDynamic"
                 ),
