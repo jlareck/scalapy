@@ -30,6 +30,18 @@ object FacadeImpl {
     import quotes.reflect.*
 
     val classDynamicSymbol = Symbol.requiredClass("me.shadaj.scalapy.py.Dynamic")
+    val classReaderSymbol = Symbol.requiredClass("me.shadaj.scalapy.readwrite.Reader")
+    val readerTypeRepr = TypeIdent(classReaderSymbol).tpe
+    val dynamicTypeRepr = TypeIdent(classDynamicSymbol).tpe
+    val applyDynamicToReaderType = readerTypeRepr.appliedTo(dynamicTypeRepr)
+    println("AST:   " + applyDynamicToReaderType)
+    val evidenceParameter = Implicits.search(applyDynamicToReaderType) match {
+      case success: ImplicitSearchSuccess => {
+        println("AST:   " + success.tree)
+        success.tree
+      }
+    }
+
     //classDynamicSymbol.declaredMethods.foreach(println)
     val callee = Symbol.spliceOwner.owner
     val methodName = callee.name
@@ -45,13 +57,16 @@ object FacadeImpl {
           Select.unique( // this.as[Dynamic].selectDynamic(methodName).as
             Apply( // this.as[Dynamic].selectDynamic(methodName)
               Select.unique( // this.as[Dynamic].selectDynamic
-                TypeApply(  // this.as[Dynamic]
-                  Select.unique( // this.as
-                    resolveThis,  // this
-                    "as"
+                Apply(      // this.as[Dynamic](evidence)
+                  TypeApply(  // this.as[Dynamic]
+                    Select.unique( // this.as
+                      resolveThis,  // this
+                      "as"
+                    ),
+                    List(TypeIdent(classDynamicSymbol))
                   ),
-                  List(TypeIdent(classDynamicSymbol))
-                ),
+                  List(evidenceParameter)
+                ),  
                 "selectDynamic"
               ),
               //List(Literal(StringConstant(methodName)))
@@ -61,6 +76,7 @@ object FacadeImpl {
           ),
           List(TypeTree.of[T]) 
         )
+      
       selectDynamicTerm.asExprOf[T]
     }
     else {
@@ -70,12 +86,15 @@ object FacadeImpl {
             Apply(    // this.as[Dynamic].applyDynamic(methodName)(parameters)
               Apply(  // this.as[Dynamic].applyDynamic(methodName)
                 Select.unique( // this.as[Dynamic].applyDynamic
-                  TypeApply(  // this.as[Dynamic]
-                    Select.unique( // this.as
-                      resolveThis,  // this
-                      "as"
+                  Apply(      // this.as[Dynamic](evidence)
+                    TypeApply(  // this.as[Dynamic]
+                      Select.unique( // this.as
+                        resolveThis,  // this
+                        "as"
+                      ),
+                      List(TypeIdent(classDynamicSymbol))
                     ),
-                    List(TypeIdent(classDynamicSymbol))
+                    List(evidenceParameter)
                   ),
                   "applyDynamic"
                 ),
