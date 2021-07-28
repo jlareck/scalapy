@@ -33,15 +33,22 @@ object FacadeImpl {
     val classReaderSymbol = Symbol.requiredClass("me.shadaj.scalapy.readwrite.Reader")
     val readerTypeRepr = TypeIdent(classReaderSymbol).tpe
     val dynamicTypeRepr = TypeIdent(classDynamicSymbol).tpe
-    val applyDynamicToReaderType = readerTypeRepr.appliedTo(dynamicTypeRepr)
-    println("AST:   " + applyDynamicToReaderType)
-    val evidenceParameter = Implicits.search(applyDynamicToReaderType) match {
+    val applyDynamicTypeToReaderType = readerTypeRepr.appliedTo(dynamicTypeRepr)
+    val tTypeToReaderType = readerTypeRepr.appliedTo(TypeTree.of[T].tpe)
+
+    println("AST:   " + applyDynamicTypeToReaderType)
+    val evidenceParameter = Implicits.search(applyDynamicTypeToReaderType) match {
       case success: ImplicitSearchSuccess => {
         println("AST:   " + success.tree)
         success.tree
       }
     }
-
+    val evidenceForTypeT = Implicits.search(tTypeToReaderType) match {
+        case success: ImplicitSearchSuccess => {
+          println("AST:   " + success.tree)
+          success.tree
+      }
+    }
     //classDynamicSymbol.declaredMethods.foreach(println)
     val callee = Symbol.spliceOwner.owner
     val methodName = callee.name
@@ -53,6 +60,7 @@ object FacadeImpl {
         
     if (args.isEmpty) {
       val selectDynamicTerm = 
+       Apply(//this.as[Dynamic](evidence).selectDynamic(methodName).as[T](evidenceForT)
         TypeApply( //this.as[Dynamic](evidence).selectDynamic(methodName).as[T]
           Select.unique( // this.as[Dynamic](evidence).selectDynamic(methodName).as
             Apply( // this.as[Dynamic](evidence).selectDynamic(methodName)
@@ -75,12 +83,16 @@ object FacadeImpl {
             "as"
           ),
           List(TypeTree.of[T]) 
-        )
-      
+        ),
+        List(evidenceForTypeT)
+       ) 
+        
+      println("IS EXPR: " + selectDynamicTerm)
       selectDynamicTerm.asExprOf[T]
     }
     else {
       val applyDynamicTerm = 
+       Apply(//  this.as[Dynamic](evidence).applyDynamic(methodName)(parameters).as[T](evidenceForT)
         TypeApply(   //  this.as[Dynamic](evidence).applyDynamic(methodName)(parameters).as[T]
           Select.unique(  //  this.as[Dynamic](evidence).applyDynamic(methodName)(parameters).as
             Apply(    // this.as[Dynamic](evidence).applyDynamic(methodName)(parameters)
@@ -105,7 +117,9 @@ object FacadeImpl {
             "as"
           ),
           List(TypeTree.of[T])         
-        )
+        ),
+        List(evidenceForTypeT)
+       ) 
       applyDynamicTerm.asExprOf[T]
     }
   }
