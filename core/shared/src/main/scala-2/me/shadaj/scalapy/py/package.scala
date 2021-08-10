@@ -12,8 +12,7 @@ import me.shadaj.scalapy.interpreter.Platform
 package object py extends PyMacros {
   def module(name: String) = Module(name)
   def module(name: String, subname: String) = Module(name, subname)
-  // inline def native[T]: T = ${FacadeImpl.native_impl[T]}
-  // inline def nativeNamed[T]: T = ??? //${FacadeImpl.native_named_impl[T]}
+
   @py.native trait None extends Any
   val None = Any.populateWith(CPythonInterpreter.noneValue).as[None]
 
