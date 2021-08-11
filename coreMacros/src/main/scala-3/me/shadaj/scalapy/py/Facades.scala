@@ -39,17 +39,14 @@ object FacadeImpl {
     val methodFromSymbol = Symbol.requiredMethod("me.shadaj.scalapy.py.Any.from")
     val classAnySymbol = Symbol.requiredClass("me.shadaj.scalapy.py.Any")
 
-    val anyTypeRepr = TypeIdent(classAnySymbol)
+    val anyTypeTree = TypeIdent(classAnySymbol)
     val readerTypeRepr = TypeIdent(classReaderSymbol).tpe
     val writerTypeRepr = TypeIdent(classWriterSymbol).tpe
     val dynamicTypeRepr = TypeIdent(classDynamicSymbol).tpe
     val applyDynamicTypeToReaderType = readerTypeRepr.appliedTo(dynamicTypeRepr)
     val applyTTypeToReaderType = readerTypeRepr.appliedTo(TypeTree.of[T].tpe)
-    val sequenceType = Inferred(TypeTree.of[Seq].tpe.appliedTo(TypeIdent(classAnySymbol).tpe))
 
-    //println("SEQUENCE TYPE:   " + sequenceType.show)
     val evidenceForDynamic = searchImplicit(applyDynamicTypeToReaderType)
-    // extract to other method
     val evidenceForTypeT = searchImplicit(applyTTypeToReaderType)
 
     val callee = Symbol.spliceOwner.owner
@@ -61,38 +58,37 @@ object FacadeImpl {
     
     if (args.isEmpty) {
       val selectDynamicTerm = 
-       Apply(//this.as[Dynamic](evidence).selectDynamic(methodName).as[T](evidenceForT)
-        TypeApply( //this.as[Dynamic](evidence).selectDynamic(methodName).as[T]
-          Select.unique( // this.as[Dynamic](evidence).selectDynamic(methodName).as
-            Apply( // this.as[Dynamic](evidence).selectDynamic(methodName)
-              Select.unique( // this.as[Dynamic](evidence).selectDynamic
-                Apply(      // this.as[Dynamic](evidence)
-                  TypeApply(  // this.as[Dynamic]
-                    Select.unique( // this.as
-                      resolveThis,  // this
-                      "as"
+        Apply(
+          TypeApply(
+            Select.unique(
+              Apply( 
+                Select.unique(
+                  Apply(
+                    TypeApply(
+                      Select.unique(
+                        resolveThis,
+                        "as"
+                      ),
+                      List(TypeIdent(classDynamicSymbol))
                     ),
-                    List(TypeIdent(classDynamicSymbol))
-                  ),
-                  List(evidenceForDynamic)
-                ),  
-                "selectDynamic"
+                    List(evidenceForDynamic)
+                  ),  
+                  "selectDynamic"
+                ),
+                List(Expr(methodName).asTerm)
               ),
-              //List(Literal(StringConstant(methodName)))
-              List(Expr(methodName).asTerm)
+              "as"
             ),
-            "as"
+            List(TypeTree.of[T]) 
           ),
-          List(TypeTree.of[T]) 
-        ),
-        List(evidenceForTypeT)
-       ) 
+          List(evidenceForTypeT)
+        ) 
 
       println(selectDynamicTerm.show)
       selectDynamicTerm.asExprOf[T]
     }
     else {
-      def implicitParameters(arg: quotes.reflect.Term) = {
+      def constructMethodFromTerm(arg: quotes.reflect.Term) = {
         val argumentType = arg.tpe.typeSymbol
         val applyArgTypeToWriter = writerTypeRepr.appliedTo(TypeIdent(argumentType).tpe)
         val tree = Apply(
@@ -108,38 +104,37 @@ object FacadeImpl {
         tree
       }
 
-      val typedVarargs = Typed(Inlined(None, Nil, Repeated(args.map(x => implicitParameters(x)),  anyTypeRepr)), Applied(TypeIdent(defn.RepeatedParamClass), List(anyTypeRepr)))
+      val typedVarargs = Typed(Inlined(None, Nil, Repeated(args.map(x => constructMethodFromTerm(x)),  anyTypeTree)), Applied(TypeIdent(defn.RepeatedParamClass), List(anyTypeTree)))
       
       val applyDynamicTerm = 
-       Apply(//  this.as[Dynamic](evidence).applyDynamic(methodName)(parameters).as[T](evidenceForT)
-        TypeApply(   //  this.as[Dynamic](evidence).applyDynamic(methodName)(parameters).as[T]
-          Select.unique(  //  this.as[Dynamic](evidence).applyDynamic(methodName)(parameters).as
-            Apply(    // this.as[Dynamic](evidence).applyDynamic(methodName)(parameters)
-              Apply(  // this.as[Dynamic](evidence).applyDynamic(methodName)
-                Select.unique( // this.as[Dynamic](evidence).applyDynamic
-                  Apply(      // this.as[Dynamic](evidence)
-                    TypeApply(  // this.as[Dynamic]
-                      Select.unique( // this.as
-                        resolveThis,  // this
-                        "as"
+        Apply(
+          TypeApply(
+            Select.unique(
+              Apply(
+                Apply(
+                  Select.unique(
+                    Apply(
+                      TypeApply(
+                        Select.unique(
+                          resolveThis,
+                          "as"
+                        ),
+                        List(TypeIdent(classDynamicSymbol))
                       ),
-                      List(TypeIdent(classDynamicSymbol))
+                      List(evidenceForDynamic)
                     ),
-                    List(evidenceForDynamic)
+                    "applyDynamic"
                   ),
-                  "applyDynamic"
+                  List(Expr(methodName).asTerm)
                 ),
-                List(Expr(methodName).asTerm)
+              List(typedVarargs)
               ),
-             List(typedVarargs)
+              "as"
             ),
-            "as"
+            List(TypeTree.of[T])         
           ),
-          List(TypeTree.of[T])         
-        ),
-        List(evidenceForTypeT)
-       ) 
-      println("METHOD: " + applyDynamicTerm.show)
+          List(evidenceForTypeT)
+        )
       applyDynamicTerm.asExprOf[T]
     }
   }
@@ -151,5 +146,138 @@ object FacadeImpl {
       sym = sym.owner  // owner of a symbol is what encloses it: e.g. enclosing method or enclosing class
     This(sym)
 
-  def native_named_impl = ???
+  def native_named_impl[T: Type](using Quotes): Expr[T] = {
+    import quotes.reflect.*
+
+    def searchImplicit(typeReprParameter: TypeRepr): Term = {
+      Implicits.search(typeReprParameter) match {
+        case success: ImplicitSearchSuccess => {
+          success.tree
+        }
+        case _ => {
+          '{}.asTerm
+        }
+      }
+    }
+
+    val classDynamicSymbol = Symbol.requiredClass("me.shadaj.scalapy.py.Dynamic")
+    val classReaderSymbol = Symbol.requiredClass("me.shadaj.scalapy.readwrite.Reader")
+    val classWriterSymbol = Symbol.requiredClass("me.shadaj.scalapy.readwrite.Writer")
+    val methodFromSymbol = Symbol.requiredMethod("me.shadaj.scalapy.py.Any.from")
+    val classAnySymbol = Symbol.requiredClass("me.shadaj.scalapy.py.Any")
+
+    val anyTypeTree = TypeIdent(classAnySymbol)
+    
+    val readerTypeRepr = TypeIdent(classReaderSymbol).tpe
+    val writerTypeRepr = TypeIdent(classWriterSymbol).tpe
+    val dynamicTypeRepr = TypeIdent(classDynamicSymbol).tpe
+    val applyDynamicTypeToReaderType = readerTypeRepr.appliedTo(dynamicTypeRepr)
+    val applyTTypeToReaderType = readerTypeRepr.appliedTo(TypeTree.of[T].tpe)
+
+    val evidenceForDynamic = searchImplicit(applyDynamicTypeToReaderType)
+    val evidenceForTypeT = searchImplicit(applyTTypeToReaderType)
+
+    val callee = Symbol.spliceOwner.owner
+    val methodName = callee.name
+    val refss = calleeParamRefs(callee)
+    if refss.length > 1 then
+      report.throwError(s"callee $callee has curried parameter lists.")
+    val args = refss.headOption.toList.flatten
+    if (args.isEmpty) {
+      val selectDynamicTerm = 
+       Apply(
+        TypeApply(
+          Select.unique(
+            Apply(
+              Select.unique(
+                Apply(
+                  TypeApply(
+                    Select.unique(
+                      resolveThis,
+                      "as"
+                    ),
+                    List(TypeIdent(classDynamicSymbol))
+                  ),
+                  List(evidenceForDynamic)
+                ),  
+                "selectDynamic"
+              ),
+              List(Expr(methodName).asTerm)
+            ),
+            "as"
+          ),
+          List(TypeTree.of[T]) 
+        ),
+        List(evidenceForTypeT)
+       )
+      selectDynamicTerm.asExprOf[T]
+    }
+    else {
+      val tupleApplyMethodSymbol = Symbol.requiredMethod("scala.Tuple2.apply")
+      val tupleType = Inferred(TypeTree.of[Tuple2].tpe.appliedTo(List(TypeTree.of[String].tpe, anyTypeTree.tpe)))
+
+      def constructMethodFromTerm(arg: quotes.reflect.Term) = {
+        val argumentType = arg.tpe.typeSymbol
+        val applyArgTypeToWriter = writerTypeRepr.appliedTo(TypeIdent(argumentType).tpe)
+        val tree = Apply(
+          Apply(
+            TypeApply(
+              Ref(methodFromSymbol),
+              List(TypeIdent(argumentType))
+            ),
+            List(arg)
+          ),
+          List(searchImplicit(applyArgTypeToWriter))
+        )
+        tree
+      }
+
+      //val tupleTypeRepr = Ident(TermRef(TypeIdent(defn.TupleClass(2)).tpe, "apply"))
+      def constructTupleTerm(arg1: quotes.reflect.Term, arg2: quotes.reflect.Term) = {
+        val tree = 
+          Apply(
+            TypeApply(
+              Ref(tupleApplyMethodSymbol),
+              List(TypeTree.of[String], anyTypeTree)
+            ),
+            List(arg1, arg2)
+          )
+        tree
+      }
+      val tupleList = args.map(x => constructTupleTerm(Expr(x.show).asTerm, constructMethodFromTerm(x)))
+      val typedVarargs = Typed(Inlined(None, Nil, Repeated(tupleList,  tupleType)), Applied(TypeIdent(defn.RepeatedParamClass), List(tupleType)))
+      
+      val applyDynamicNamedTerm = 
+       Apply(
+        TypeApply(  
+          Select.unique(
+            Apply(
+              Apply(
+                Select.unique(
+                  Apply(
+                    TypeApply(
+                      Select.unique(
+                        resolveThis,
+                        "as"
+                      ),
+                      List(TypeIdent(classDynamicSymbol))
+                    ),
+                    List(evidenceForDynamic)
+                  ),
+                  "applyDynamicNamed"
+                ),
+                List(Expr(methodName).asTerm)
+              ),
+             List(typedVarargs)
+            ),
+            "as"
+          ),
+          List(TypeTree.of[T])         
+        ),
+        List(evidenceForTypeT)
+       ) 
+      println("METHOD: " + applyDynamicNamedTerm.show)
+      applyDynamicNamedTerm.asExprOf[T]
+    }
+  }
 }

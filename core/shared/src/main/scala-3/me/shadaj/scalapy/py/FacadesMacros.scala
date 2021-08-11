@@ -6,5 +6,5 @@ trait FacadesCreatorMacros {
 
 trait PyMacros {
   inline def native[T]: T = ${FacadeImpl.native_impl[T]}
-  inline def nativeNamed[T]: T = ??? //${FacadeImpl.native_named_impl[T]}
+  inline def nativeNamed[T]: T = ${FacadeImpl.native_named_impl[T]}
 }
