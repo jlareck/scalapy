@@ -9,7 +9,7 @@ trait Any
 class Bar[T <: Any](fImpl: T) extends FacadeCreator[T] { def create: T = fImpl }
 
 object FacadeImpl {
-  
+
   def creator[T <: Any](using Type[T], Quotes): Expr[FacadeCreator[T]] = 
     import quotes.reflect.*
     // new FacadeCreator[T] { def create: T = new T }
