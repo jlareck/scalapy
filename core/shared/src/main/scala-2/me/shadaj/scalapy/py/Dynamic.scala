@@ -4,7 +4,6 @@ import scala.language.dynamics
 
 import me.shadaj.scalapy.readwrite.FacadeReader
 import me.shadaj.scalapy.interpreter.CPythonInterpreter
-//import reflect.Selectable.reflectiveSelectable
 
 @native trait Dynamic extends Any with AnyDynamics
 

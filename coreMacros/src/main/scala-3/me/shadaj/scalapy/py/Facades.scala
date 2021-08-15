@@ -1,10 +1,7 @@
 package me.shadaj.scalapy.py
 
-import scala.language.experimental.macros
-import scala.annotation.StaticAnnotation
 import scala.quoted.*
-import scala.language.dynamics
-import scala.reflect.TypeTest
+import scala.annotation.StaticAnnotation
 class native extends StaticAnnotation
 
 class FacadeCreator[T]
