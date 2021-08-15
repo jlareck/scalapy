@@ -1,10 +1,8 @@
 package me.shadaj.scalapy.py
 
-import scala.language.experimental.macros
-import scala.annotation.StaticAnnotation
 import scala.quoted.*
-import scala.language.dynamics
-import scala.reflect.TypeTest
+import scala.annotation.StaticAnnotation
+
 class native extends StaticAnnotation
 
 class FacadeCreator[T]
@@ -12,7 +10,7 @@ trait Any
 class Bar[T <: Any](fImpl: T) extends FacadeCreator[T] { def create: T = fImpl }
 
 object FacadeImpl {
-  
+
   def creator[T <: Any](using Type[T], Quotes): Expr[FacadeCreator[T]] = 
     import quotes.reflect.*
     // new FacadeCreator[T] { def create: T = new T }
