@@ -12,7 +12,9 @@ class ThreadStressTest extends AnyFunSuite {
             list.append(i)
         }
       })
+
       t.start()
+
       t
     }
 
