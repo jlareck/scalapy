@@ -4,11 +4,11 @@ import scala.language.experimental.macros
 
 // class FacadeValueProvider(private[scalapy] var rawValue: PyValue) extends Any
 
-class StaticModule(name: String) extends Module {
+trait StaticModule(name: String) extends Module {
   rawValue = module(name).value
 }
 
-class StaticValue(value: Any) extends Any {
+trait StaticValue(value: Any) extends Any {
   rawValue = value.value
 }
 
