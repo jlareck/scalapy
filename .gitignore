@@ -12,4 +12,3 @@ facadeGen/.mypy_cache
 .bsp/
 .bloop/
 **/.DS_store
-.bsp/

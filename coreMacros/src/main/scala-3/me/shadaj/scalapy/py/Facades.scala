@@ -6,7 +6,7 @@ class native extends StaticAnnotation
 
 class FacadeCreator[T]
 trait Any
-class Bar[T <: Any](fImpl: T) extends FacadeCreator[T] { def create: T = fImpl }
+class Bar[T <: Any](fImpl: () => T) extends FacadeCreator[T] { def create: T = fImpl() }
 
 object FacadeImpl {
 
@@ -30,7 +30,14 @@ object FacadeImpl {
     // new FacadeCreator[T] { def create: T = new T }
     // println(TypeTree.of[T])
     val bar = TypeIdent(Symbol.requiredClass("me.shadaj.scalapy.py.Bar"))
-    Apply(TypeApply(Select.unique(New(bar),"<init>"),List(TypeTree.of[T])),List(Apply(Select.unique(New(TypeTree.of[T]),"<init>"),List()))).asExprOf[FacadeCreator[T]]
+    val anonfunSym = Symbol.newMethod(Symbol.spliceOwner, "$anonfun", 
+      MethodType(List())(_ => List(), _ => TypeTree.of[T].tpe))
+    val anonfun = DefDef(anonfunSym, 
+      { case List(List()) => Some(Apply(Select.unique(New(TypeTree.of[T]),"<init>"),List())) })
+    val anonTerm = Ref(anonfunSym)
+
+    Apply(TypeApply(Select.unique(New(bar),"<init>"),List(TypeTree.of[T])),List(Block(List(anonfun),Closure(anonTerm, None)))).asExprOf[FacadeCreator[T]]
+
 
   def native_impl[T: Type](using Quotes): Expr[T] = {
     import quotes.reflect.*
