@@ -1,7 +1,7 @@
 package me.shadaj.scalapy.py
 
 trait FacadesCreatorMacros {
-  implicit def getCreator[F <: Any]: FacadeCreator[F] = ??? //${FacadeImpl.creator[F]}
+  inline implicit def getCreator[F <: Any]: FacadeCreator[F] = ${FacadeImpl.creator[F]}
 }
 
 trait PyMacros {

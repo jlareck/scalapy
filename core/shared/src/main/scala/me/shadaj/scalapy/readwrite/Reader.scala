@@ -2,6 +2,7 @@ package me.shadaj.scalapy.readwrite
 
 import scala.reflect.ClassTag
 
+import me.shadaj.scalapy.readwrite.FacadeReader
 import me.shadaj.scalapy.interpreter.PyValue
 import me.shadaj.scalapy.py
 import me.shadaj.scalapy.py.FacadeCreator
@@ -25,13 +26,9 @@ trait Reader[T] {
   }
 }
 
-object Reader extends TupleReaders with FunctionReaders {
+object Reader extends TupleReaders with FunctionReaders with FacadeReader {
   implicit val anyReader: Reader[py.Any] = new Reader[py.Any] {
     override def readNative(r: Platform.Pointer): py.Any = py.Any.populateWith(PyValue.fromBorrowed(r))
-  }
-
-  implicit def facadeReader[F <: py.Any](implicit creator: FacadeCreator[F]): Reader[F] = new Reader[F] {
-    override def readNative(r: Platform.Pointer): F = creator.create(PyValue.fromBorrowed(r))
   }
 
   implicit val unitReader: Reader[Unit] = new Reader[Unit] {

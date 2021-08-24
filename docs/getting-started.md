@@ -66,7 +66,7 @@ To convert Python values back into Scala, we use the `.as` method and pass in th
 val listLength = listLengthPython.as[Int]
 ```
 ## Execution
-ScalaPy officially supports Python 3.{7, 8, 9}. If you want to use another version of Python, you should define the environment variable `SCALAPY_PYTHON_LIBRARY`
+ScalaPy officially supports Python 3.{7, 8, 9}. If you want to use another version of Python, you should either define the environment variable `SCALAPY_PYTHON_LIBRARY`
 
 ```shell
 python --version
@@ -74,3 +74,30 @@ python --version
 export SCALAPY_PYTHON_LIBRARY=python3.8
 sbt run
 ```
+
+or set the system property `scalapy.python.library`
+
+```shell
+sbt -Dscalapy.python.library=python3.8 run
+```
+
+The environment variable takes precedence over the system property.
+
+## Virtualenv
+
+To use ScalaPy with a Python installation inside a virtualenv, set the path to the Python interpreter executable using either the `scalapy.python.programname` system property
+
+```shell
+sbt -Dscalapy.python.programname=/Users/example/example-env/bin/python run
+```
+
+or the `SCALAPY_PYTHON_PROGRAMNAME` environment variable
+
+```shell
+export SCALAPY_PYTHON_PROGRAMNAME=/Users/example/example-env/bin/python
+sbt run
+```
+
+The environment variable takes precedence over the system property.
+
+This variable is used as the input to the Python/C API function `Py_SetProgramName`. `Py_SetProgramName` is run prior to `Py_Initialize` to set the correct paths to Python run-time libraries (`prefix`, `exec_prefix`, ...).
