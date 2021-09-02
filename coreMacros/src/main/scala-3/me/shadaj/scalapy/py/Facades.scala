@@ -6,7 +6,7 @@ class native extends StaticAnnotation
 
 class FacadeCreator[T]
 trait Any
-class Bar[T <: Any](fImpl: () => T) extends FacadeCreator[T] { def create: T = fImpl() }      
+class Bar[T <: Any](fImpl: () => T) extends FacadeCreator[T] { def create: T = fImpl() }
 
 object Helper {
   def classDynamicSymbol(using Quotes) =
