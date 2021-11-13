@@ -10,7 +10,7 @@ import me.shadaj.scalapy.readwrite.{Reader, Writer}
 import scala.collection.mutable.Queue
 import me.shadaj.scalapy.interpreter.Platform
 
-package object py extends PyMacros {
+package object py extends PyMacros with ScalaPyDefined {
   def module(name: String) = Module(name)
   def module(name: String, subname: String) = Module(name, subname)
 

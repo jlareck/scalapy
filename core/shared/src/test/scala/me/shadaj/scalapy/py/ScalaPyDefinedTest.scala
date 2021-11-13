@@ -7,42 +7,44 @@ import org.scalatest.funsuite.AnyFunSuite
 import me.shadaj.scalapy.interpreter.PyValue
 import me.shadaj.scalapy.readwrite.{Reader, Writer}
 
-@native class NdArray[T](val rawValue: PyValue)(implicit reader: Reader[T]) extends Object {
+import scala.quoted.*
+
+@native class NdArray extends Any {
   def size: Int = native
+  def reshape(args: Int*): NdArray = this.as[Dynamic].reshape(args.toPythonProxy).as[NdArray]
 }
 
-object NdArray {
-  implicit def reader[T](implicit reader: Reader[T]): Reader[NdArray[T]] = new Reader[NdArray[T]] {
-    override def read(v: PyValue): NdArray[T] = new NdArray[T](v)(reader)
-  }
+class MyArray extends NdArray {
+  override def size: Int = 7
+  registerScalaPyDefined(this, module("numpy").ndarray)
 }
 
-class MyArray[T](rawValue: PyValue)(implicit reader: Reader[T]) extends NdArray[T](rawValue) {
-  override def size: Int = 3
-}
-
-object MyArray {
-  implicit def reader[T](implicit reader: Reader[T]): Reader[MyArray[T]] = new Reader[MyArray[T]] {
-    override def read(v: PyValue): MyArray[T] = new MyArray[T](v)(reader)
-  }
+class ScalaA extends Any {
+  def size: Int = 2
+  registerScalaPyDefined(this)
 }
 
 class ScalaPyDefinedTest extends AnyFunSuite {
-  test("Gets exception when running Python fails") {
+  test("ScalaPy Defined Test") {
     local {
       val np = module("numpy")
       
-      val a = np.ndarray(Seq(1, 2).toPythonProxy).as[NdArray[Int]]
-      val b = np.ndarray(Seq(1, 2).toPythonProxy).as[MyArray[Int]]
+      val a = np.ndarray(Seq(1, 2).toPythonProxy).as[NdArray]
 
-      println(np.apply_along_axis(((x: NdArray[Int]) => x.size), 1, a)) // [2]
-      println(np.apply_along_axis(((x: NdArray[Int]) => x.size), 1, b)) // expect: [3], actual: [2]
+      val b12 = MyArray()    
+      b12.initRawValue(Seq(1, 2).toPythonProxy)
+      println(b12)
+      val b21: MyArray = b12.reshape(2, 1).as[MyArray]
+      println(b21)
+      println(np.apply_along_axis(((x: NdArray) => x.as[Dynamic].size), 1, b12))
+      println(np.apply_along_axis(((x: MyArray) => x.as[Dynamic].size), 1, b21))
 
-      val types = module("types")
-      def clsexec = (ns: mutable.Map[Any, Any]) => {ns += (Any.from("size") -> Any.from(3)); Unit}
-      val ndarrayClass = py"np.ndarray"
-      val myarray = types.new_class("myarray", Seq(np.ndarray,), exec_body = clsexec)
+      val scalaa = new ScalaA
+      scalaa.initRawValue()
+      println(scalaa.size)
+      println(scalaa.as[Dynamic].size)
 
+      // variable is a problem
     }
   }
 }
