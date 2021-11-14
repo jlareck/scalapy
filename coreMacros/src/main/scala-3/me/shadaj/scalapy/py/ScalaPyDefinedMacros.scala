@@ -49,7 +49,7 @@ object ScalaPyDefinedImpl {
     val ndarray = Apply(Select.unique(np, "selectDynamic"), List(Literal(StringConstant("ndarray"))))
     println(ndarray.show)
     // name of the new class
-    val name = Literal(StringConstant(Symbol.spliceOwner.owner.owner.name))
+    val name = Literal(StringConstant(TypeTree.of[T].tpe.typeSymbol.name))
 
     println("CLASS NAME: " + TypeTree.of[T].tpe.typeSymbol.name)
 
